@@ -1,0 +1,320 @@
+#!/usr/bin/env bash
+MODULES_HOME=$HOME/.modules
+
+UI_GRAY="\033[1;37m"
+UI_BLUE="\033[1;34m"
+UI_DARKGRAY="\033[90m"
+UI_RED="\033[0;31m"
+UI_GREEN="\033[0;32m"
+UI_YELLOW="\033[1;33m"
+UI_WHITE="\033[1;37m"
+UI_NONE="\033[0m"
+
+function ok {
+  printf "${UI_NONE}[${UI_GREEN}OK${UI_NONE}] $@\r\n"
+}
+
+function info {
+  printf "${UI_NONE}[${UI_YELLOW}INFO${UI_NONE}] $@\n"
+}
+
+function fail {
+  printf "${UI_NONE}[${UI_RED}FAIL${UI_NONE}] $@\n"
+}
+
+function assert {
+  if [ $? -gt 1 ]; then
+    fail "$@"
+    exit 1
+  elif [ $? -eq 1 ]; then
+    ok "$@"
+  fi
+}
+
+function ex {
+  if [ -n "$VERBOSE" ]; then
+    "$@"
+  else
+    "$@" &> $LOG
+  fi
+}
+
+function ensure_home {
+  stat $HOME/.modules &>/dev/null
+  if [ $? -gt 0 ]; then
+    ok "initialied ${HOME}/.modules"
+    mkdir $HOME/.modules
+  fi 
+}
+
+function ensure_repo {
+  git status &>/dev/null
+  if test $? -eq 128; then
+    ex git init
+    assert "initialized as git repo"
+  fi
+}
+
+function require {
+  local installer="brew"
+  local instruction="try running"
+
+  if [ `uname` = "Linux" ]; then
+    installer="apt-get"
+    priv="try running sudo"
+  fi
+
+  for var in "$@"; do
+    local bin=`which $var`
+    if [ -z $bin ]; then
+      fail "$instruction \"$installer install $var\"."
+      exit 1
+    fi
+  done
+}
+
+require "git" "jq"
+ensure_home
+
+declare -x LOG="gmm-debug.log"
+declare -x VERSION=`jq .version < package.json`
+
+function help {
+cat <<- EOF
+
+  git module manager v${VERSION}
+ 
+  $(printf "usage: ${UI_WHITE}gmm${UI_NONE} <${UI_WHITE}command${UI_NONE}> [options]")
+ 
+  commands:
+    i, install [-v] <user/repo> [branch]
+    u, uninstall <user/repo>
+    ls
+    cache [ls|clean]        do stuff
+
+  options:
+    --help, -h              show this help information
+    --version               print the version number
+
+EOF
+}
+
+#
+# try to update a submodule
+#
+function gmm_update {
+  ensure_repo
+
+  ex git submodule update --recursive
+  assert "updated submodule"
+  ok "$1 is up to date"
+}
+
+#
+# try to list the modules that are installed in this repo
+#
+function gmm_ls {
+  ensure_repo "silent"
+
+  local modules=`git submodule foreach --quiet --recursive \
+    'echo $toplevel/$path@$(git symbolic-ref --short HEAD)'`
+
+  local -a modules=($modules)
+  local -i count=${#modules[*]}
+  local -i lastIndex=$(($count - 1)) index
+
+  if [ ${#modules[*]} = 0 ]
+    then
+    ok "there are no modules, use \"gmm install <user/repo>\" to add one."
+    exit 0
+  fi
+
+  info "listing (${PWD})\n"
+
+  for ((index=0; index<=lastIndex; index++))
+  do
+    local file=${modules[$index]}
+    local location=${file%%"@"*}
+    local branch=${file#*"@"}
+    local relative=${location/$PWD/}
+
+    info "📦  $(basename $relative)@$branch in .$relative" 
+  done
+
+  local base=$(basename $PWD)
+  printf "\r\n"
+  ok "found ${UI_WHITE}$count${UI_NONE} module(s) in ${UI_WHITE}$base${UI_NONE}" 
+  printf "\r\n"
+}
+
+#
+# Visit all git repos in the cache, list them
+# so that we know what we have on this machine.
+#
+function gmm_ls_cache {
+  ensure_repo
+  let counter=0
+
+  function update {
+    local d="$1"
+    if [ -d "$d" ]; then
+      cd $d > /dev/null
+      if [ -d ".git" ]; then
+        info "📦  $d in ${PWD/$MODULES_HOME}"
+        ((counter++))
+      else
+        scan *
+      fi
+      cd .. > /dev/null
+    fi
+  }
+
+  function scan {
+    #echo "`pwd`"
+    for x in $*; do
+      update "$x"
+    done
+  }
+
+  info "listing cache (${MODULES_HOME})\n"
+  scan $MODULES_HOME
+  printf "\n"
+  ok "found ${counter} repos"
+}
+
+#
+# Check if the repo exists, if it does not, clone it
+# if it does exist, just update it and then add it as
+# a submodule.
+#
+function gmm_install {
+  ensure_repo
+
+  local protocol=${PROTOCOL:-git}
+  local host=${HOST:-github.com}
+  local branch=${2:-master}
+  local dest=modules/$1 #${1#*"/"*}
+  local src=$protocol://$host/$1.git
+
+  if [ ! -d $MODULES_HOME/$1 ]
+    then
+
+    rm -rf /tmp/gmm-handler
+    ex git clone --depth 1 --recursive $src $MODULES_HOME/$1 > /tmp/gmm-handler 2>&1 &
+
+    # error code 128 means that we are either offline or the
+    # repo cant be found, either way, we should fail and exit.
+    if [ $? = 128 ]; then
+      fail "not available (offline?)"
+    fi
+
+    tail -f /tmp/githandler-fifo | grep -o --line-buffered "[0-9]\{0,3\}%"
+
+  else
+    local olddir=$PWD
+    cd $MODULES_HOME/$1
+
+    ex git pull
+
+    # error code 1 means that we are up to date already,
+    # but anything greater means that there was an actual error.
+    assert "pulled latest from $src"
+
+    cd $olddir
+    info "using cached version"
+  fi
+
+  # if we got this far, we can add a submodule out of the cache.
+  ex git submodule add -b $branch $MODULES_HOME/$1 $dest
+  assert "added the submodule"
+
+  # we should try to update the submodule after adding it
+  #gmm_update $1
+
+  ok "submodule installed"
+}
+
+#
+# Check if the submodule is installed, if it is, remove it
+#
+function gmm_uninstall {
+  ensure_repo
+
+  local dest=modules/$1
+
+  ex git submodule deinit -f $dest
+  assert "remove deinitialized"
+
+  ex git rm -rf $dest
+  assert "remove submodule"
+
+  ex rm -rf .git/modules/$dest
+  assert "submodule files removed"
+
+  git submodule update
+  assert "submodules updated"
+ 
+  ok "$dest successfully removed"
+}
+
+#
+# handle arguments parsing
+#
+while test $# -gt 0; do
+  case "$1" in
+    ls)
+      shift
+      if [ "$1" = "cache" ]; then
+        gmm_ls_cache
+        exit 0
+      fi
+      gmm_ls
+      break
+      ;;
+    -h|--help)
+      help
+      exit 0
+      ;;
+    i|install)
+      shift
+      if [ $1 = "-v" ]; then
+        shift
+        VERBOSE=1
+      fi
+
+      if test $# -gt 0; then
+        gmm_install $@
+      else
+        echo "no user/repo specified"
+        exit 1
+      fi
+      break
+      ;;
+    u|uninstall)
+      shift
+      if [ $1 = "-v" ]; then
+        shift
+        VERBOSE=1
+      fi
+
+      if test $# -gt 0; then
+        gmm_uninstall $@
+      else
+        echo "no user/repo specified"
+        exit 1
+      fi
+      break
+      ;;
+    --version)
+      echo $VERSION
+      break
+      ;;
+    *)
+     fail "unknown command"
+     help
+     break
+     ;;
+  esac
+done
+
+# vi: expandtab sw=2 ts=2
