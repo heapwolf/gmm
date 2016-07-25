@@ -88,7 +88,7 @@ $ myproject ls
 ```
 
 ## LIST CACHED MODULES
-The cache will **try** to update evry time you install.But if
+The cache will **try** to update every time you install. But if
 you want to update all items in your cache, you can run the
 `gmm cache update` command.
 
