@@ -7,6 +7,16 @@ Simpler, faster, less complex dependency management!
 # STATUS
 Idea/Work in Progress
 
+# INSTALL
+You can just run this simple one-limer to install. The google-shortened link
+points to the raw github user content (paste it in the url-bar of your browser
+to verify). The sudo prompt for your password is the chmod command asking for
+your permission to make the file executable.
+
+```bash
+(curl -sL https://goo.gl/kS3VRE > /usr/local/sbin/gmm && sudo chmod 700 gmm)
+```
+
 # COMMANDS
 There are only a handful, because really that's all you
 should need. Here is some example output.
