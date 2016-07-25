@@ -23,14 +23,23 @@ in the url-bar of your browser to verify). The sudo prompt for
 your password is the chmod command asking for your permission
 to make the file executable.
 
+### USING [`CURL`](https://curl.haxx.se/)
 ```bash
 (curl -sL https://goo.gl/kS3VRE > /usr/local/sbin/gmm && sudo chmod 700 gmm)
 ```
 
-You can also use [bpkg](https://github.com/bpkg/bpkg) to install `gmm`.
+### USING [`BPKG`](https://github.com/bpkg/bpkg)
 
 ```bash
 bpkg install -g 0x00A/gmm
+```
+
+### USING [`GIT`](https://git-scm.com/)
+
+```bash
+git clone git@github.com:0x00A/gmm.git /usr/local/lib/gmm
+sudo chmod 700 /usr/local/lib/gmm/gmm
+ln -s /usr/local/lib/gmm/gmm /usr/local/bin/gmm
 ```
 
 # COMMANDS
