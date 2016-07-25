@@ -95,6 +95,7 @@ cat <<- EOF
   options:
     --help, -h              show this help information
     --version               print the version number
+    --update                self update
 
 EOF
 }
@@ -256,6 +257,21 @@ function gmm_uninstall {
   ok "$dest successfully removed"
 }
 
+function update {
+  require "curl"
+
+  local source="https://raw.githubusercontent.com/0x00A/gmm/master/gmm"
+  local dest="/usr/local/sbin/gmm"
+
+  curl -sL $source > $dest
+  assert "download success"
+
+  sudo chmod 700 gmm
+  assert "flags updated"
+
+  ok "update success"
+}
+
 #
 # handle arguments parsing
 #
@@ -302,6 +318,10 @@ while test $# -gt 0; do
         echo "no user/repo specified"
         exit 1
       fi
+      break
+      ;;
+    --update)
+      update
       break
       ;;
     --version)
