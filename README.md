@@ -17,7 +17,7 @@ them from upstream and simply re-install using `gmm`.
 Idea/Work in Progress
 
 # INSTALL GMM
-You can just run this simple one-limer to install. The google-
+You can just run this simple one-liner to install. The google-
 shortened link points to the raw github user content (paste it
 in the url-bar of your browser to verify). The sudo prompt for
 your password is the chmod command asking for your permission
@@ -78,7 +78,7 @@ only.
 ## LIST INSTALLED MODULES
 
 ```
-$ myproject ls
+$ gmm ls
 [INFO] listing (/Users/username/workroot/0x00a/gmm)
 
 [INFO] 📦  foo@master in ./modules/someorg/foo
