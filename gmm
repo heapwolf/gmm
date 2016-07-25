@@ -190,6 +190,11 @@ function gmm_ls_cache {
 function gmm_install {
   ensure_repo
 
+  if ! git diff-index --quiet HEAD --; then
+    fail "first you need to commit your changes"
+    exit 1
+  fi
+
   local protocol=${PROTOCOL:-git}
   local host=${HOST:-github.com}
   local branch=${2:-master}
@@ -227,6 +232,9 @@ function gmm_install {
   # if we got this far, we can add a submodule out of the cache.
   ex git submodule add -b $branch $MODULES_HOME/$1 $dest
   assert "added the submodule"
+
+  ex chmod a=rX
+  assert "set submodule to read-only"
 
   # we should try to update the submodule after adding it
   #gmm_update $1
