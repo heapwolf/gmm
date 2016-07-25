@@ -27,6 +27,12 @@ to make the file executable.
 (curl -sL https://goo.gl/kS3VRE > /usr/local/sbin/gmm && sudo chmod 700 gmm)
 ```
 
+You can also use [bpkg](https://github.com/bpkg/bpkg) to install `gmm`.
+
+```bash
+bpkg install -g 0x00A/gmm
+```
+
 # COMMANDS
 There are only a handful, because really that's all you
 should need. Here is some example output.
