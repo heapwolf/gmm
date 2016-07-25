@@ -1,4 +1,8 @@
 {
   "name": "gmm",
-  "version": "1.0.0"
+  "version": "1.0.0",
+  "description": "Git Module Manager",
+  "global": "1",
+  "install": "install -b gmm ${PREFIX:-/usr/local}/bin/gmm",
+  "scripts": [ "gmm" ]
 }
