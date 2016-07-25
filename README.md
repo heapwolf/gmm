@@ -4,19 +4,19 @@ git module manager
 # MOTIVATION
 Simpler, faster, less complex dependency management!
 
-Submodules receive much praise and criticism.Yet both depend on
-the interpretation of how they should be used; `gmm` focuses
+Submodules receive much praise and criticism. Yet both depend
+on the interpretation of how they should be used; `gmm` focuses
 entirely on providing a workflow for dependency management.
 
 Don't edit submodules — it's not an easy git workflow to manage.
 This is also the basis of most submodule criticism. Instead, use
 them as immutable dependencies, when you need changes, publish
-them from upstream and simply re install using `gmm`.
+them from upstream and simply re-install using `gmm`.
 
 # STATUS
 Idea/Work in Progress
 
-# INSTALL
+# INSTALL GMM
 You can just run this simple one-limer to install. The google-
 shortened link points to the raw github user content (paste it
 in the url-bar of your browser to verify). The sudo prompt for
@@ -37,9 +37,10 @@ should need. Here is some example output.
   usage: gmm <command> [options]
 
   commands:
-    i, install [-v] <user/repo> [branch]
-    u, uninstall <user/repo>
-    ls [cache]
+    i, install [-v] <user/repo> [branch]   install modules
+    u, uninstall <user/repo>               uninstall modules
+    ls [cache]                             list installed or cached packages
+    cache <update|clean>                   do stuff with the cache
 
   options:
     --help, -h              show this help information
@@ -47,7 +48,7 @@ should need. Here is some example output.
     --update                self update
 ```
 
-### INSTALL MODULES
+## INSTALL MODULES
 Install first clones the repo to your `~/.modules` cache, then
 adds it to your project from the cache.This is nice for
 performance and offline usage.
@@ -55,10 +56,6 @@ performance and offline usage.
 Install will ensure your working tree is clean before adding a
 submodule. Then, it will add the submodule (at the specified
 branch, or master by default), then commit it for you.
-
-Once your submodule is installed you will see a `modules`
-directory in your project, these files will be flagged as read
-only.
 
 ```
 $ gmm i someorg/somerepo
@@ -68,7 +65,11 @@ $ gmm i someorg/somerepo
 [OK] submodule installed
 ```
 
-### LIST INSTALLED MODULES
+Once your submodule is installed you will see a `modules`
+directory in your project, these files will be flagged as read
+only.
+
+## LIST INSTALLED MODULES
 
 ```
 $ myproject ls
@@ -80,7 +81,10 @@ $ myproject ls
 [OK] found 2 module(s) in myproject
 ```
 
-### LIST CACHED MODULES
+## LIST CACHED MODULES
+The cache will **try** to update evry time you install.But if
+you want to update all items in your cache, you can run the
+`gmm cache update` command.
 
 ```
 $ gmm ls cache

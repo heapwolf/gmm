@@ -87,10 +87,10 @@ cat <<- EOF
   $(printf "usage: ${UI_WHITE}gmm${UI_NONE} <${UI_WHITE}command${UI_NONE}> [options]")
  
   commands:
-    i, install [-v] <user/repo> [branch]
-    u, uninstall <user/repo>
-    ls
-    cache [ls|clean]        do stuff
+    i, install [-v] <user/repo> [branch]   install modules
+    u, uninstall <user/repo>               uninstall modules
+    ls [cache]                             list installed or cached packages
+    cache <update|clean>                   do stuff with the cache
 
   options:
     --help, -h              show this help information
@@ -154,6 +154,7 @@ function gmm_ls {
 #
 function gmm_ls_cache {
   ensure_repo
+  let refresh=$1
   let counter=0
 
   function update {
@@ -161,7 +162,13 @@ function gmm_ls_cache {
     if [ -d "$d" ]; then
       cd $d > /dev/null
       if [ -d ".git" ]; then
-        info "📦  $d in ${PWD/$MODULES_HOME}"
+
+        if [ -z $refresh ]; then
+          ex git pull --all
+          info "📦 $d updated"
+        else
+          info "📦  $d in ${PWD/$MODULES_HOME}"
+        fi
         ((counter++))
       else
         scan *
@@ -201,11 +208,22 @@ function gmm_install {
   local dest=modules/$1 #${1#*"/"*}
   local src=$protocol://$host/$1.git
 
+  local opwd=$PWD
+
   if [ ! -d $MODULES_HOME/$1 ]
     then
 
     rm -rf /tmp/gmm-handler
-    ex git clone --depth 1 --recursive $src $MODULES_HOME/$1 > /tmp/gmm-handler 2>&1 &
+    ex git clone --depth 1 --recursive $src $MODULES_HOME/$1
+
+    cd $MODULES_HOME/$1
+
+    for remote in `git branch -r `; do
+      ex git branch --track $remote;
+      assert "$remote is now available on $1"
+    done
+
+    cd $opwd
 
     # error code 128 means that we are either offline or the
     # repo cant be found, either way, we should fail and exit.
@@ -285,6 +303,13 @@ function update {
 #
 while test $# -gt 0; do
   case "$1" in
+    cache)
+      shift
+      if [ "$1" = "update" ]; then
+        gmm_ls_cache $1
+      fi
+      break
+      ;;
     ls)
       shift
       if [ "$1" = "cache" ]; then
