@@ -88,7 +88,7 @@ only.
 
 ```
 $ gmm ls
-[INFO] listing (/Users/username/workroot/0x00a/gmm)
+[INFO] listing (/Users/username/myproject)
 
 [INFO] 📦  foo@master in ./modules/someorg/foo
 [INFO] 📦  quxx@0.1.0 in ./modules/someorg/quxx
