@@ -111,3 +111,15 @@ $ gmm ls cache
 [OK] found 2 repos
 ```
 
+# SETTINGS
+Environment variables that can be set in your shell
+
+### `MODULES_HOME`
+By default is `~/.modules`.
+
+### `PROTOCOL`
+By default is `git`, but can be `https`, etc.
+
+### `HOST`
+By default is `github.com`, set to whatever your git server is.
+

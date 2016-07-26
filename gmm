@@ -35,16 +35,17 @@ function ex {
   if [ -n "$VERBOSE" ]; then
     "$@"
   else
-    "$@" &> $LOG
+    "$@" >> $LOG 2>&1
   fi
+
 }
 
 function ensure_home {
   stat $MODULES_HOME &>/dev/null
   if [ $? -gt 0 ]; then
-    ex mkdir $MODULES_HOME
+    mkdir $MODULES_HOME
     assert "initialied ${MODULES_HOME}"
-  fi 
+  fi
 }
 
 function ensure_repo {
@@ -76,16 +77,16 @@ function require {
 require "git" "jq"
 ensure_home
 
-declare -x LOG="gmm-debug.log"
+declare -x LOG="$PWD/gmm-debug.log"
 declare -x VERSION="1.0.0"
 
 function help {
 cat <<- EOF
 
   git module manager v${VERSION}
- 
+
   $(printf "usage: ${UI_WHITE}gmm${UI_NONE} <${UI_WHITE}command${UI_NONE}> [options]")
- 
+
   commands:
     i, install [-v] <user/repo> [branch]   install modules
     u, uninstall <user/repo>               uninstall modules
@@ -107,7 +108,7 @@ function gmm_update {
   ensure_repo
 
   ex git submodule update --recursive
-  assert "updated submodule"
+  assert "submodule updated recursively"
   ok "$1 is up to date"
 }
 
@@ -139,12 +140,12 @@ function gmm_ls {
     local branch=${file#*"@"}
     local relative=${location/$PWD/}
 
-    info "📦  $(basename $relative)@$branch in .$relative" 
+    info "📦  $(basename $relative)@$branch in .$relative"
   done
 
   local base=$(basename $PWD)
   printf "\r\n"
-  ok "found ${UI_WHITE}$count${UI_NONE} module(s) in ${UI_WHITE}$base${UI_NONE}" 
+  ok "found ${UI_WHITE}$count${UI_NONE} module(s) in ${UI_WHITE}$base${UI_NONE}"
   printf "\r\n"
 }
 
@@ -190,7 +191,7 @@ function gmm_ls_cache {
 }
 
 function contains {
-  case "$2" in 
+  case "$2" in
    *"$1"*)
      return 0
      ;;
@@ -206,7 +207,7 @@ function contains {
 function gmm_install {
   ensure_repo
 
-  if ! ex git diff-index --quiet HEAD --; then
+  if test -n "$(git status --porcelain)"; then
     fail "first you need to commit your changes"
     exit 1
   fi
@@ -215,9 +216,8 @@ function gmm_install {
   # ensure that we ignore our log file, if there is no .gitignore
   # or there it doesn't contain the name of our log gile, add it.
   #
-  if [ ! -f ".gitignore" ] || [ $(cat .gitignore) != *"$LOG"* ]; then
-    echo "$LOG" >> ".gitignore"
-    echo "modules/" >> ".gitignore"
+  if [ ! -f ".gitignore" ] || [ $(cat .gitignore) != *"gmm-debug.log"* ]; then
+    echo "gmm-debug.log" >> ".gitignore"
   fi
 
   local protocol=${PROTOCOL:-git}
@@ -236,8 +236,10 @@ function gmm_install {
     cd $MODULES_HOME/$1
 
     for remote in `git branch -r `; do
-      ex git branch --track $remote;
-      assert "$remote is now available on $1"
+      local br=${remote#* }
+      if [ "$br" != "->" ] && [ "$br" != "HEAD" ]; then
+        ex git branch --track "$br"
+      fi
     done
 
     cd $oldpwd
@@ -261,6 +263,9 @@ function gmm_install {
 
     cd $oldpwd
   fi
+
+  ex git config -f .gitmodules submodule.modules/$1.ignore dirty
+  assert "ignore changes to module"
 
   # if we got this far, we can add a submodule out of the cache.
   ex git submodule add -b $branch $MODULES_HOME/$1 $dest
@@ -291,17 +296,14 @@ function gmm_uninstall {
   local dest=modules/$1
 
   ex git submodule deinit -f $dest
-  assert "remove deinitialized"
+  assert "deinitialized submodule"
 
-  ex git rm -rf $dest
-  assert "remove submodule"
-
-  ex rm -rf .git/modules/$dest
+  rm -rf .git/modules/$dest
   assert "submodule files removed"
 
   git submodule update
   assert "submodules updated"
- 
+
   ok "$dest successfully removed"
 }
 
