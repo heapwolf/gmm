@@ -1,5 +1,5 @@
 #!/usr/bin/env bash
-MODULES_HOME=$HOME/.modules
+MODULES_HOME=${MODULES_HOME:-$HOME/.modules}
 
 UI_GRAY="\033[1;37m"
 UI_BLUE="\033[1;34m"
@@ -40,10 +40,10 @@ function ex {
 }
 
 function ensure_home {
-  stat $HOME/.modules &>/dev/null
+  stat $MODULES_HOME &>/dev/null
   if [ $? -gt 0 ]; then
-    ok "initialied ${HOME}/.modules"
-    mkdir $HOME/.modules
+    ex mkdir $MODULES_HOME
+    assert "initialied ${MODULES_HOME}"
   fi 
 }
 
@@ -124,7 +124,7 @@ function gmm_ls {
   local -i count=${#modules[*]}
   local -i lastIndex=$(($count - 1)) index
 
-  if [ ${#modules[*]} = 0 ]
+  if [ $count = 0 ]
     then
     ok "there are no modules, use \"gmm install <user/repo>\" to add one."
     exit 0
@@ -189,6 +189,15 @@ function gmm_ls_cache {
   ok "found ${counter} repos"
 }
 
+function contains {
+  case "$2" in 
+   *"$1"*)
+     return 0
+     ;;
+  esac
+  return 1
+}
+
 #
 # Check if the repo exists, if it does not, clone it
 # if it does exist, just update it and then add it as
@@ -197,9 +206,18 @@ function gmm_ls_cache {
 function gmm_install {
   ensure_repo
 
-  if ! git diff-index --quiet HEAD --; then
+  if ! ex git diff-index --quiet HEAD --; then
     fail "first you need to commit your changes"
     exit 1
+  fi
+
+  #
+  # ensure that we ignore our log file, if there is no .gitignore
+  # or there it doesn't contain the name of our log gile, add it.
+  #
+  if [ ! -f ".gitignore" ] || [ $(cat .gitignore) != *"$LOG"* ]; then
+    echo "$LOG" >> ".gitignore"
+    echo "modules/" >> ".gitignore"
   fi
 
   local protocol=${PROTOCOL:-git}
@@ -208,12 +226,11 @@ function gmm_install {
   local dest=modules/$1 #${1#*"/"*}
   local src=$protocol://$host/$1.git
 
-  local opwd=$PWD
+  local oldpwd=$PWD
 
   if [ ! -d $MODULES_HOME/$1 ]
     then
 
-    rm -rf /tmp/gmm-handler
     ex git clone --depth 1 --recursive $src $MODULES_HOME/$1
 
     cd $MODULES_HOME/$1
@@ -223,7 +240,7 @@ function gmm_install {
       assert "$remote is now available on $1"
     done
 
-    cd $opwd
+    cd $oldpwd
 
     # error code 128 means that we are either offline or the
     # repo cant be found, either way, we should fail and exit.
@@ -231,33 +248,38 @@ function gmm_install {
       fail "not available (offline?)"
     fi
 
-    tail -f /tmp/githandler-fifo | grep -o --line-buffered "[0-9]\{0,3\}%"
-
   else
-    local olddir=$PWD
     cd $MODULES_HOME/$1
 
     ex git pull
 
-    # error code 1 means that we are up to date already,
-    # but anything greater means that there was an actual error.
-    assert "pulled latest from $src"
+    if [ $? -eq 0 ]; then
+      info "cache updated"
+    else
+      info "using cached version"
+    fi
 
-    cd $olddir
-    info "using cached version"
+    cd $oldpwd
   fi
 
   # if we got this far, we can add a submodule out of the cache.
   ex git submodule add -b $branch $MODULES_HOME/$1 $dest
-  assert "added the submodule"
+  if [ $? -gt 1 ]; then
+    assert "submodule added"
+  elif [ $? -eq 1 ]; then
+    # the submodule is already in the index, we
+    # should try to update it instead of add it
+    ex cd modules/$1
+    gmm_update $1
+    ex cd $oldpwd
+  fi
 
-  ex chmod a=rX
+  ex chmod -R a-w modules/$1
   assert "set submodule to read-only"
 
-  # we should try to update the submodule after adding it
-  #gmm_update $1
-
-  ok "submodule installed"
+  ex git add -A .
+  ex git commit -am "added git submodule $1"
+  assert "committed submodule"
 }
 
 #
