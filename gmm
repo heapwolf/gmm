@@ -133,8 +133,7 @@ function gmm_ls {
 
   info "listing (${PWD})\n"
 
-  for ((index=0; index<=lastIndex; index++))
-  do
+  for ((index=0; index<=lastIndex; index++)); do
     local file=${modules[$index]}
     local location=${file%%"@"*}
     local branch=${file#*"@"}
