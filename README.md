@@ -82,7 +82,8 @@ $ gmm i someorg/somerepo
 
 Once your submodule is installed you will see a `modules`
 directory in your project, these files will be flagged as read
-only.
+only. (This directory can be configured to be called whatever
+you want using the `MODULES_LOCAL` variable).
 
 ## LIST INSTALLED MODULES
 
@@ -116,6 +117,11 @@ Environment variables that can be set in your shell
 
 ### `MODULES_HOME`
 By default is `~/.modules`.
+
+### `MODULES_LOCAL`
+Will determine what the local modules directory should be named.
+For example, you might want this to be called `node_modules` or
+`cxx_modules` instead of the default which is just `modules`.
 
 ### `PROTOCOL`
 By default is `git`, but can be `https`, etc.

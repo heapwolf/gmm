@@ -1,5 +1,6 @@
 #!/usr/bin/env bash
 MODULES_HOME=${MODULES_HOME:-$HOME/.modules}
+MODULES_LOCAL=${MODULES_LOCAL:-modules}
 
 UI_GRAY="\033[1;37m"
 UI_BLUE="\033[1;34m"
@@ -222,7 +223,7 @@ function gmm_install {
   local protocol=${PROTOCOL:-git}
   local host=${HOST:-github.com}
   local branch=${2:-master}
-  local dest=modules/$1 #${1#*"/"*}
+  local dest=$MODULES_LOCAL/$1 #${1#*"/"*}
   local src=$protocol://$host/$1.git
 
   local oldpwd=$PWD
@@ -263,7 +264,7 @@ function gmm_install {
     cd $oldpwd
   fi
 
-  ex git config -f .gitmodules submodule.modules/$1.ignore dirty
+  ex git config -f .gitmodules submodule.$MODULES_LOCAL/$1.ignore dirty
   assert "ignore changes to module"
 
   # if we got this far, we can add a submodule out of the cache.
@@ -273,12 +274,12 @@ function gmm_install {
   elif [ $? -eq 1 ]; then
     # the submodule is already in the index, we
     # should try to update it instead of add it
-    ex cd modules/$1
+    ex cd $MODULES_LOCAL/$1
     gmm_update $1
     ex cd $oldpwd
   fi
 
-  ex chmod -R a-w modules/$1
+  ex chmod -R a-w $MODULES_LOCAL/$1
   assert "set submodule to read-only"
 
   ex git add -A .
@@ -292,12 +293,12 @@ function gmm_install {
 function gmm_uninstall {
   ensure_repo
 
-  local dest=modules/$1
+  local dest=$MODULES_LOCAL/$1
 
   ex git submodule deinit -f $dest
   assert "deinitialized submodule"
 
-  rm -rf .git/modules/$dest
+  rm -rf .git/$MODULES_LOCAL/$dest
   assert "submodule files removed"
 
   git submodule update
