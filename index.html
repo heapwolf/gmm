@@ -206,6 +206,7 @@
           and reduced performance. Git was designed to solve this problem,
           but it does so at a very low level.
 
+        <hr>
         <p>
           Git's <span class="highlight">submodules</span> receive much praise and 
           criticism. Yet both depend on the interpretation of how they should be used;
@@ -221,8 +222,14 @@
         <p>
           Performance and availablility are important as important as usability! Every
           time you download a module, it should go to your cache. This makes offline
-          time easier and installing modules faster since with git only the delta is
-          downloaded.
+          time easier and installing modules faster since with git <span class="highlight">
+          only the delta is downloaded</span>.
+
+        <hr>
+        <p>
+          Keep in mind, this is a generalized solution, not a drop in replacement
+          for your package manager. The goal is to stay minimal and free of creep!
+
       </div>
 
       <div class="right">
@@ -238,21 +245,8 @@
   (curl -sL https://goo.gl/kS3VRE > /usr/local/sbin/gmm && sudo chmod 700 gmm)
         </code></pre>
 
-        <p>Install using <b class="highlight">git</b>.</p>
-        <pre><code>
-  git clone git@github.com:0x00A/gmm.git /usr/local/lib/gmm
-  sudo chmod 700 /usr/local/lib/gmm/gmm
-  ln -s /usr/local/lib/gmm/gmm /usr/local/bin/gmm
-        </code></pre>
 
-        <p>Install using <b class="highlight">bpkg</b>.</p>
-        <pre><code>
-  bpkg install -g 0x00A/gmm
-        </code></pre>
-      </div>
-
-      <div class="left">
-
+        <hr>
         <h2>Getting Started</h2>
         <h4>Installing Packages</h4>
         <pre><code>
@@ -268,32 +262,14 @@
   gmm install name/repo 3.0.0
         </pre></code>
 
-        <hr>
         <p>
           Installing usually means running a script from the package. For example,
           node.js projects have a package.json file with shell scripts in it, many C++
           projects have a makefile, etc. <span class="highlight">gmm</span> will try
           to do this for you.
-        <p>
-          Keep in mind, this is a generalized solution, not a drop in replacement
-          for your package manager. The goal is to stay minimal and free of creep!
 
       </div>
-      <div class="right">
-        <h2>Settings</h2>
-        <h4>Configuring your workflow</h4>
-        <p>
-          Settings are managed though environment variables, so they can be saved without
-          any special configuration files/formats and so that they can be set dynamically.
-          You can find a full list of settings 
-          <a href="https://github.com/0x00A/gmm#settings">here</a>.
-        </p>
-        <pre><code>
-  exports HOST="mygitserver.com"
 
-  HOST=github.com gmm install name/repo
-        </pre></code>
-      </div>
     </section>
 
     <footer>
