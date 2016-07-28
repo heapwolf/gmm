@@ -16,7 +16,7 @@ function ok {
 }
 
 function info {
-  printf "${UI_NONE}[${UI_YELLOW}INFO${UI_NONE}] $@\n"
+  printf "${UI_NONE}[${UI_BLUE}INFO${UI_NONE}] $@\n"
 }
 
 function fail {
@@ -166,7 +166,7 @@ function gmm_ls_cache {
 
         if [ -z $refresh ]; then
           ex git pull --all
-          info "📦 $d updated"
+          info "📦  $d updated"
         else
           info "📦  $d in ${PWD/$MODULES_HOME}"
         fi
