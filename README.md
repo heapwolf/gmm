@@ -56,6 +56,7 @@ should need. Here is some example output.
     u, uninstall <user/repo>               uninstall modules
     ls [cache]                             list installed or cached packages
     cache <update|clean>                   do stuff with the cache
+    search <term> [language]               search for stuff
 
   options:
     --help, -h              show this help information
@@ -111,6 +112,40 @@ $ gmm ls cache
 
 [OK] found 2 repos
 ```
+
+## SEARCH FOR MODULES
+Any search takes only a few milliseconds.
+
+```
+$ gmm search hyperterm
+[OK] searching api.github.com for 'hyperterm'
+
+📦  zeit/hyperterm - HTML/JS/CSS Terminal
+    7858 ★ https://github.com/zeit/hyperterm
+
+📦  sindresorhus/hyperterm-snazzy - Snazzy HyperTerm theme
+    164 ★ https://github.com/sindresorhus/hyperterm-snazzy
+
+📦  matheuss/hpm - ✨ A plugin manager for HyperTerm ✨
+    108 ★ https://github.com/matheuss/hpm
+
+📦  zeit/hyperpower - HyperTerm particle effects extension
+    92 ★ https://github.com/zeit/hyperpower
+
+📦  sibartlett/hyperterm-1password - 1Password extension for HyperTerm
+    80 ★ https://github.com/sibartlett/hyperterm-1password
+
+📦  staltz/hyperpunk - A cyberpunk theme for HyperTerm
+    64 ★ https://github.com/staltz/hyperpunk
+
+📦  mxstbr/hyperterm-spacegray - Spacegray theme for hyperterm
+    62 ★ https://github.com/mxstbr/hyperterm-spacegray
+
+📦  CWSpear/hyperterm-visor - Open your HyperTerm terminal from anywhere with a global hotkey.
+    60 ★ https://github.com/CWSpear/hyperterm-visor
+...
+```
+
 
 # SETTINGS
 Environment variables that can be set in your shell

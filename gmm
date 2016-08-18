@@ -1,6 +1,7 @@
 #!/usr/bin/env bash
 MODULES_HOME=${MODULES_HOME:-$HOME/.modules}
 MODULES_LOCAL=${MODULES_LOCAL:-modules}
+SEARCH_API=${SEARCH_API:-api.github.com}
 
 UI_GRAY="\033[1;37m"
 UI_BLUE="\033[1;34m"
@@ -45,7 +46,7 @@ function ensure_home {
   stat $MODULES_HOME &>/dev/null
   if [ $? -gt 0 ]; then
     mkdir $MODULES_HOME
-    assert "initialied ${MODULES_HOME}"
+    assert "initialized ${MODULES_HOME}"
   fi
 }
 
@@ -79,7 +80,7 @@ require "git" "jq"
 ensure_home
 
 declare -x LOG="$PWD/gmm-debug.log"
-declare -x VERSION="1.0.0"
+declare -x VERSION="1.1.0"
 
 function help {
 cat <<- EOF
@@ -93,6 +94,7 @@ cat <<- EOF
     u, uninstall <user/repo>               uninstall modules
     ls [cache]                             list installed or cached packages
     cache <update|clean>                   do stuff with the cache
+    search <term> [language]               search for stuff
 
   options:
     --help, -h              show this help information
@@ -197,6 +199,43 @@ function contains {
      ;;
   esac
   return 1
+}
+
+function gmm_search {
+  require "curl" "jq"
+
+  IFS=$'\n'
+  local query=$1
+  local language=${2:-javascript}
+  local sort=${3:-stars}
+
+  ok "searching ${SEARCH_API} for '${query}'\n"
+  local dest="https://${SEARCH_API}/search/repositories"
+  local search="q=${query}+language:${language}&sort=${sort}&order=desc"
+
+  local results=`curl -s "${dest}?${search}" |\
+    jq -r '.items[] | .owner.login,\
+      .name,\
+      if .description == "" then "(no description)" else .description end,\
+      .html_url,\
+      .watchers'`
+
+  local -a modules=($results)
+  local -i count=${#modules[*]}
+  local -i lastIndex=$(($count - 1)) index
+
+  for ((index=0; index<=lastIndex; index++)); do
+
+    local owner=${modules[index]}; index=index+1
+    local module=${modules[index]}; index=index+1
+    local description=${modules[index]}; index=index+1
+    local url=${modules[index]}; index=index+1
+    local stars=${modules[index]};
+
+    printf "📦  ${UI_BLUE}%s/%s${UI_NONE} - %s\n  ${UI_DARKGRAY} %s ★ %s ${UI_NONE}\n\n" \
+      $owner $module $description $stars $url
+
+  done
 }
 
 #
@@ -332,6 +371,11 @@ while test $# -gt 0; do
       if [ "$1" = "update" ]; then
         gmm_ls_cache $1
       fi
+      break
+      ;;
+    search)
+      shift
+      gmm_search $@
       break
       ;;
     ls)
