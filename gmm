@@ -347,18 +347,26 @@ function gmm_uninstall {
 }
 
 function update {
-  require "curl"
 
-  local source="https://raw.githubusercontent.com/0x00A/gmm/master/gmm"
-  local dest="/usr/local/sbin/gmm"
+  local oldpwd=$PWD
+  local source="https://github.com/0x00A/gmm"
+  local dest="/usr/local/lib/gmm"
 
-  curl -sL $source > $dest
-  assert "download success"
+  stat $dest &>/dev/null
+  if [ $? -gt 0 ]; then
+    git clone $source $dest
+    assert "installed"
+    cd $dest
+    sudo chmod 700 gmm
+    assert "permissions updated"
+  else
+    cd $dest
+    ex git pull
+    assert "updated"
+  fi
 
-  sudo chmod 700 gmm
-  assert "flags updated"
-
-  ok "update success"
+  cd $oldpwd
+  ok "success"
 }
 
 #
