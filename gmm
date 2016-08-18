@@ -76,6 +76,24 @@ function require {
   done
 }
 
+urlencode() {
+  local string="${1}"
+  local strlen=${#string}
+  local encoded=""
+  local pos c o
+
+  for (( pos=0 ; pos<strlen ; pos++ )); do
+     c=${string:$pos:1}
+     case "$c" in
+        [^+#[:space:]] ) o="${c}" ;;
+        * )               printf -v o '%%%02x' "'$c"
+     esac
+     encoded+="${o}"
+  done
+  echo "${encoded}"
+  REPLY="${encoded}"
+}
+
 require "git" "jq"
 ensure_home
 
@@ -192,15 +210,6 @@ function gmm_ls_cache {
   ok "found ${counter} repos"
 }
 
-function contains {
-  case "$2" in
-   *"$1"*)
-     return 0
-     ;;
-  esac
-  return 1
-}
-
 function gmm_search {
   require "curl" "jq"
 
@@ -211,7 +220,7 @@ function gmm_search {
 
   ok "searching ${SEARCH_API} for '${query}'\n"
   local dest="https://${SEARCH_API}/search/repositories"
-  local search="q=${query}+language:${language}&sort=${sort}&order=desc"
+  local search=`urlencode "q=${query}+language:${language}&sort=${sort}&order=desc"`
 
   local results=`curl -s "${dest}?${search}" |\
     jq -r '.items[] | .owner.login,\
