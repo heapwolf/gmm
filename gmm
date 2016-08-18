@@ -214,13 +214,13 @@ function gmm_search {
   require "curl" "jq"
 
   IFS=$'\n'
-  local query=$1
-  local language=${2:-javascript}
+  local query=`urlencode $1`
+  local language=`urlencode ${2:-JavaScript}`
   local sort=${3:-stars}
 
   ok "searching ${SEARCH_API} for '${query}'\n"
   local dest="https://${SEARCH_API}/search/repositories"
-  local search=`urlencode "q=${query}+language:${language}&sort=${sort}&order=desc"`
+  local search="q=${query}+language:${language}&sort=${sort}&order=desc"
 
   local results=`curl -s "${dest}?${search}" |\
     jq -r '.items[] | .owner.login,\
