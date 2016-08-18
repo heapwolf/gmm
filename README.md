@@ -47,7 +47,7 @@ There are only a handful, because really that's all you
 should need. Here is some example output.
 
 ```
-  git module manager v1.0.0
+  git module manager v1.1.0
 
   usage: gmm <command> [options]
 
@@ -56,7 +56,7 @@ should need. Here is some example output.
     u, uninstall <user/repo>               uninstall modules
     ls [cache]                             list installed or cached packages
     cache <update|clean>                   do stuff with the cache
-    search <term> [language]               search for stuff
+    search "term" [language]               search for stuff
 
   options:
     --help, -h              show this help information

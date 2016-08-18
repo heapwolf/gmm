@@ -112,7 +112,7 @@ cat <<- EOF
     u, uninstall <user/repo>               uninstall modules
     ls [cache]                             list installed or cached packages
     cache <update|clean>                   do stuff with the cache
-    search <term> [language]               search for stuff
+    search "term" [language]               search for stuff
 
   options:
     --help, -h              show this help information
